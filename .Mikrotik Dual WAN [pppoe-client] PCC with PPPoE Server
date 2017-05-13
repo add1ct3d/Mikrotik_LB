@@ -1,0 +1,60 @@
+# Following is a short reference guide for Mikrotik base dual wan PCC (using pppoe clients) with PPPoE Server as a authentication server for local users in one Box. You can add as much wan (pppoe clients) as you like.
+# Make sure you change the interface name accordingly. In this example I have 3 interfaces.
+# ether0  (named as Local) is connected with Local LAN users.
+# ether  1   &   2  (named as WAN1 & WAN2) are connected with ISP WAN switch.
+# Also change the user name passwords in the pppoe client section, or create manually via PPP/Interfaces
+# PPPoE users IP pool is 172.16.0.0/16 (internet is allowed for this series only means when the user will be connected via pppoe dialer, he will be able to use internet)
+
+# Setting up INTERFACES names for our comfort 
+ 
+/interface ethernet
+set 0 name=Local
+set 1 name=WAN1
+set 2 name=WAN2
+ 
+### Adding PPPoE Client connections for each WAN interface, Make sure to change it or add via GUI
+ 
+/interface pppoe-client
+ 
+add ac-name="" add-default-route=no allow=pap,chap,mschap1,mschap2 dial-on-demand=no disabled=yes interface=WAN1 max-mru=1480 max-mtu=1480 mrru=disabled name=pppoe-out1 password=hahaha \
+profile=default service-name="" use-peer-dns=no user=user-1
+add ac-name="" add-default-route=no allow=pap,chap,mschap1,mschap2 dial-on-demand=no disabled=yes interface=WAN2 max-mru=1480 max-mtu=1480 mrru=disabled name=pppoe-out2 password=hahaha \
+profile=default service-name="" use-peer-dns=no user=user-2
+ 
+### Starting the MANGLE MAGIC : ) PCC SCRIPTING START Here
+/ip firewall mangle
+ 
+add action=accept chain=prerouting disabled=no in-interface=pppoe-out1
+add action=accept chain=prerouting disabled=no in-interface=pppoe-out2
+ 
+add action=mark-connection chain=prerouting disabled=no dst-address-type=!local new-connection-mark=wan1_conn passthrough=yes per-connection-classifier=both-addresses-and-ports:2/0 src-address=172.16.0.0/16
+add action=mark-connection chain=prerouting disabled=no dst-address-type=!local new-connection-mark=wan2_conn passthrough=yes per-connection-classifier=both-addresses-and-ports:2/1 src-address=172.16.0.0/16
+ 
+add action=mark-routing chain=prerouting connection-mark=wan1_conn disabled=no new-routing-mark=to_wan1 passthrough=yes src-address=172.16.0.0/16
+add action=mark-routing chain=prerouting connection-mark=wan2_conn disabled=no new-routing-mark=to_wan2 passthrough=yes src-address=172.16.0.0/16
+ 
+### NATTING both WAN connection for PPPoE IP Pool users only
+ 
+/ip firewall nat
+add action=masquerade chain=srcnat disabled=no out-interface=pppoe-out1 src-address=172.16.0.0/16
+add action=masquerade chain=srcnat disabled=no out-interface=pppoe-out2 src-address=172.16.0.0/16
+ 
+### Setting Default Routes for MARKED packets for both WAN and for local router use. (zaib)
+ 
+/ip route
+add check-gateway=ping disabled=no distance=1 dst-address=0.0.0.0/0 gateway=pppoe-out1 routing-mark=to_wan1 scope=30 target-scope=10
+add check-gateway=ping disabled=no distance=1 dst-address=0.0.0.0/0 gateway=pppoe-out2 routing-mark=to_wan2 scope=30 target-scope=10
+add check-gateway=ping disabled=no distance=1 dst-address=0.0.0.0/0 gateway=pppoe-out1 scope=30 target-scope=10
+add check-gateway=ping disabled=no distance=1 dst-address=0.0.0.0/0 gateway=pppoe-out2 scope=30 target-scope=10
+
+##  Side Note:
+#             If you are facing difficulty in opening dsl modem page, then try following code.
+
+/ip firewall address-list
+add list=exempt-from-pcc address=192.168.1.1/32
+add list=exempt-from-pcc address=192.168.2.1/32
+#(change ips to your adsl modem ip’s)
+ 
+/ip firewall mangle
+add chain=prerouting dst-address-list=exempt-from-pcc action=accept
+
