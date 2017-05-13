@@ -1,0 +1,4 @@
+/ip firewall nat
+add action=dst-nat chain=dstnat disabled=no dst-port=80 in-interface=ether1-gateway protocol=tcp to-addresses=192.168.1.200 to-ports=433
+
+add action=dst-nat chain=dstnat disabled=no dst-port=22 in-interface=ether1-gateway protocol=tcp to-addresses=192.168.1.200 to-ports=2222
