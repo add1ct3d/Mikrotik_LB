@@ -1,0 +1,2 @@
+/ip firewall mangle
+add action=mark-routing chain=prerouting log-prefix=VLAN15 new-routing-mark=wan2_conn passthrough=no src-address=192.168.8.0/24
