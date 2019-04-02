@@ -1,0 +1,48 @@
+
+    /ip dhcp-client
+add add-default-route=no dhcp-options=hostname,clientid disabled=no interface=WAN7 script="{\r\
+    \n    :local rmark \"WAN7\"\r\
+    \n    :local count [/ip route print count-only where comment=\"WAN7\"]\r\
+    \n    :if (\$bound=1) do={\r\
+    \n        :if (\$count = 0) do={\r\
+    \n            /ip route add gateway=\$\"gateway-address\" comment=\"WAN7\" routing-mark=\$rmark\r\
+    \n        } else={\r\
+    \n            :if (\$count = 1) do={\r\
+    \n                :local test [/ip route find where comment=\"WAN7\"]\r\
+    \n                :if ([/ip route get \$test gateway] != \$\"gateway-address\") do={\r\
+    \n                    /ip route set \$test gateway=\$\"gateway-address\"\r\
+    \n                }\r\
+    \n            } else={\r\
+    \n                :error \"Multiple routes found\"\r\
+    \n            }\r\
+    \n        }\r\
+    \n    } else={\r\
+    \n        /ip route remove [find comment=\"WAN7\"]\r\
+    \n    }\r\
+    \n}\r\
+    \n"
+
+
+//////
+
+
+    {
+    :local rmark "to_WAN7"
+    :local count [/ip route print count-only where comment="WAN7"]
+    :if ($bound=1) do={
+        :if ($count = 0) do={
+            /ip route add gateway=$"gateway-address" comment="WAN7" routing-mark=$rmark
+        } else={
+            :if ($count = 1) do={
+                :local test [/ip route find where comment="WAN7"]
+                :if ([/ip route get $test gateway] != $"gateway-address") do={
+                    /ip route set $test gateway=$"gateway-address"
+                }
+            } else={
+                :error "Multiple routes found"
+            }
+        }
+    } else={
+        /ip route remove [find comment="WAN7"]
+    }
+}
