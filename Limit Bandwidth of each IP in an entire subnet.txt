@@ -1,0 +1,6 @@
+/queue type
+add kind=pcq name=pcq-upload-custom pcq-classifier=src-address pcq-rate=5M
+add kind=pcq name=pcq-download-custom pcq-classifier=dst-address pcq-rate=5M
+/queue simple
+add name=Throttle-Each queue=pcq-upload-custom/pcq-download-custom \
+target=192.168.123.0/24
