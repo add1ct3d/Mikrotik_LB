@@ -14,13 +14,6 @@ add name=walid password=walid profile=L2TP service=l2tp
 
 // conncting claint 
 /interface pptp-client
-add connect-to=91.74.48.206 disabled=no name=pptp-out1 password=magat profile=default user=danny
+add connect-to=91.74.XX.XX disabled=no name=pptp-out1 password=madkour profile=default user=WALID
 
-
-//// Speed limted 
-/queue type
-add kind=pcq name=pcq-upload-custom pcq-classifier=src-address pcq-rate=5M
-add kind=pcq name=pcq-download-custom pcq-classifier=dst-address pcq-rate=10M
-/queue simple
-add name=Throttle-Each queue=pcq-upload-custom/pcq-download-custom target=ether10
 
