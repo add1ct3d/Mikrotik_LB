@@ -1,0 +1,26 @@
+
+/ip pool
+add name=pool1 ranges=192.168.123.50-192.168.123.254
+
+/ppp profile
+add local-address=192.168.88.2 name=L2TP remote-address=pool1
+
+
+/interface l2tp-server server
+set default-profile=L2TP enabled=yes ipsec-secret=sbpsadmin use-ipsec=yes
+
+/ppp secret
+add name=walid password=walid profile=L2TP service=l2tp
+
+// conncting claint 
+/interface pptp-client
+add connect-to=91.74.48.206 disabled=no name=pptp-out1 password=magat profile=default user=danny
+
+
+//// Speed limted 
+/queue type
+add kind=pcq name=pcq-upload-custom pcq-classifier=src-address pcq-rate=5M
+add kind=pcq name=pcq-download-custom pcq-classifier=dst-address pcq-rate=10M
+/queue simple
+add name=Throttle-Each queue=pcq-upload-custom/pcq-download-custom target=ether10
+
