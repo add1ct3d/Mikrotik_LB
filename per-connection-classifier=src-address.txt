@@ -1,0 +1,40 @@
+//#Explanation: Let's assume this configuration.
+
+/ip address
+add address=192.168.170.18/24 comment=ISP_01 interface=ether1 network=192.168.170.0
+add address=172.16.1.2/30 comment=ISP_02 interface=ether2 network=172.16.1.0
+add address=192.168.0.1/24 comment=Local interface=ether3 network=192.168.0.0
+
+//#Policy routing:
+
+/ip firewall mangle
+add chain=input dst-address=192.168.170.0/24
+add chain=input dst-address=172.16.0.0/30
+
+
+add action=mark-connection chain=prerouting connection-mark=no-mark in-interface=ether1 new-connection-mark=ISP_01_IN
+add action=mark-connection chain=prerouting connection-mark=no-mark in-interface=ether2 new-connection-mark=ISP_02_IN
+
+add action=mark-connection chain=prerouting connection-mark=no-mark dst-address-type=!local in-interface=ether3 new-connection-mark=ISP_01_IN per-connection-classifier=src-address:2/0
+add action=mark-connection chain=prerouting connection-mark=no-mark dst-address-type=!local in-interface=ether3 new-connection-mark=ISP_02_IN per-connection-classifier=src-address:2/1 
+
+add action=mark-routing chain=prerouting connection-mark=ISP_01_IN in-interface=ether3 new-routing-mark=ISP_01_OUT passthrough=no
+add action=mark-routing chain=prerouting connection-mark=ISP_02_IN in-interface=ether3 new-routing-mark=ISP_02_OUT passthrough=no
+
+add action=mark-routing chain=output connection-mark=ISP_01_IN new-routing-mark=ISP_01_OUT
+add action=mark-routing chain=output connection-mark=ISP_02_IN  new-routing-mark=ISP_02_OUT
+
+
+#//Nating rule: 
+
+/ip firewall nat
+add action=masquerade chain=srcnat out-interface=ether1
+add action=masquerade chain=srcnat out-interface=ether2
+
+//#Routing 
+
+/ip route
+add check-gateway=ping distance=1 gateway=192.168.170.254 routing-mark=ISP_01_OUT
+add check-gateway=ping distance=2 gateway=172.16.1.1 routing-mark=ISP_02_OUT
+add check-gateway=ping distance=1 gateway=172.16.1.1,192.168.170.254
+
