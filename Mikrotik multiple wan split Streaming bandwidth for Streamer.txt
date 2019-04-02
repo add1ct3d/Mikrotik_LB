@@ -1,0 +1,43 @@
+//If you have multiple wan at home and want to optimize your streaming (better performance and better quality) this is your guideline
+
+
+/ip firewall address-list
+add address=live-sin.twitch.tv list=twitch-up
+add address=live-hkg.twitch.tv list=twitch-up
+add address=live-tpe.twitch.tv list=twitch-up
+
+/ip firewall nat
+add action=masquerade chain=srcnat out-interface=ISP1-Interface
+add action=masquerade chain=srcnat out-interface=ISP2-Interface
+
+/ip firewall mangle
+add action=mark-connection chain=prerouting in-interface=ISP1-Interface new-connection-mark=isp1_conn passthrough=yes
+add action=mark-connection chain=prerouting in-interface=ISP2-Interface new-connection-mark=isp2_conn passthrough=yes
+add action=mark-connection chain=prerouting comment=force-isp2_live-twitch dst-address-list=twitch-up new-connection-mark=isp2_conn passthrough=yes
+add action=mark-routing chain=prerouting connection-mark=isp1_conn in-interface-list=lan new-routing-mark=isp1 passthrough=no
+add action=mark-routing chain=prerouting connection-mark=isp2_conn in-interface-list=lan new-routing-mark=isp2 passthrough=no
+
+
+
+
+
+//
+post.net.playstation.net
+get.net.playstation.net
+fus01.ps4.update.playstation.net
+feu01.ps4.update.playstation.net
+deu01.ps4.update.playstation.net
+ps4updptl.eu.np.community.playstation.net
+tmdb.np.dl.playstation.net
+themis.dl.playstation.net
+sf.api.np.km.playstation.net
+asm.np.community.playstation.net
+artcdnsecure.ribob01.net
+api-p014.ribob01.net
+apicdn-p014.ribob01.net
+t-prof.np.community.playstation.net
+ps4updptl.eu.np.community.playstation.net
+ps4.updptl.sp-int.community.playstation.net
+ps4updptl.jp.sp-int.community.playstation.net
+ps4-eb.ww.np.dl.playstation.net
+ps4-eb.ww.np.dl.playstation.net
